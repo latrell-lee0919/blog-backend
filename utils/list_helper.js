@@ -25,8 +25,24 @@ const favoriteBlog = (blogs) => {
     : favorite
 }
 
+const mostBlogs = (blogs) => { // review this
+  const authors = blogs.map(b => b.author)
+  const reducer = (acc, val) => {
+    acc[val] = (acc[val] || 0 ) + 1
+    return acc
+  }
+  const authorsMap = authors.reduce(reducer, {})
+  const highestAuthor = Object.keys(authorsMap).reduce((a, b) => authorsMap[a] > authorsMap[b] ? a : b)
+  const authorObj = {
+    author: highestAuthor,
+    blogs: authorsMap[highestAuthor]
+  }
+  return authorObj
+}
+
 module.exports = {
   dummy,
   totalLikes,
   favoriteBlog,
+  mostBlogs
 }
