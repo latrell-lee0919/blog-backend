@@ -22,7 +22,7 @@ blogRouter.post('/', async (request, response) => {
     title: body.title,
     author: body.author,
     url: body.url,
-    likes: body.likes || 0
+    likes: body.likes === undefined ? 0 : body.likes
   })
 
   if (blog.title && blog.url) {
@@ -31,6 +31,11 @@ blogRouter.post('/', async (request, response) => {
   } else {
     response.status(400).end()
   }
+})
+
+blogRouter.delete('/:id', async (request, response) => {
+  await Blog.findByIdAndRemove(request.params.id)
+  response.status(204).end()
 })
 
 module.exports = blogRouter
