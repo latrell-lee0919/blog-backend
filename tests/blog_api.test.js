@@ -69,6 +69,17 @@ test('empty likes property defaults to zero', async () => {
   expect(newBlogResponse.likes).toBe(0)
 })
 
+test('missing title and url yields 400 status code', async () => {
+  const newBlog ={
+    author: 'Supertest Author'
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(400)
+})
+
 afterAll(() => {
   mongoose.connection.close()
 })
