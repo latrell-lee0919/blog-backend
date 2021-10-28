@@ -49,6 +49,26 @@ test('a valid blog can be added', async () => {
   )
 })
 
+test('empty likes property defaults to zero', async () => {
+  const newBlog = {
+    title: 'Another test blog',
+    author: 'SuperTest Author',
+    url: 'www.supertest.com'
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(200)
+    .expect('Content-Type', /application\/json/)
+
+  const response = await api.get('/api/blogs')
+
+  const newBlogResponse = response.body[2]
+
+  expect(newBlogResponse.likes).toBe(0)
+})
+
 afterAll(() => {
   mongoose.connection.close()
 })
