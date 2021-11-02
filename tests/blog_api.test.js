@@ -4,9 +4,11 @@ const helper = require('./test_helper')
 const app = require('../app')
 const api = supertest(app)
 const Blog = require('../models/blog')
+const User = require('../models/user')
 
 beforeEach(async () => {
   await Blog.deleteMany({})
+  await User.deleteMany({})
 
   for(let blog of helper.initialBlogs) {
     let blogObject = new Blog(blog)
@@ -15,20 +17,66 @@ beforeEach(async () => {
 })
 
 describe('when initial blogs are saved', () => {
+  var headers
+  beforeEach(async () => {
+    const user = {
+      username: 'tester',
+      name: 'test',
+      password: 'testing'
+    }
+
+    await api
+      .post('/api/users')
+      .send(user)
+
+    const result = await api
+      .post('/api/login')
+      .send(user)
+
+    headers = {
+      'Authorization': `bearer ${result.body.token}`
+    }
+  })
+
   test('all blogs are returned', async () => {
-    const response = await api.get('/api/blogs')
+    const response = await api
+      .get('/api/blogs')
+      .set(headers)
+      .expect('Content-Type', /application\/json/)
 
     expect(response.body).toHaveLength(helper.initialBlogs.length)
   })
 
   test('blog post has unique identifier', async () => {
-    const response = await api.get('/api/blogs')
+    const response = await api
+      .get('/api/blogs')
+      .set(headers)
 
     expect(response.body[0].id).toBeDefined()
   })
 })
 
 describe('posting a blog', () => {
+  var headers
+  beforeEach(async () => {
+    const user = {
+      username: 'tester',
+      name: 'test',
+      password: 'testing'
+    }
+
+    await api
+      .post('/api/users')
+      .send(user)
+
+    const result = await api
+      .post('/api/login')
+      .send(user)
+
+    headers = {
+      'Authorization': `bearer ${result.body.token}`
+    }
+  })
   test('a valid blog can be added', async () => {
     const newBlog = {
       title: 'Testing new blog can be added',
@@ -41,6 +89,7 @@ describe('posting a blog', () => {
       .post('/api/blogs')
       .send(newBlog)
       .expect(200)
+      .set(headers)
       .expect('Content-Type', /application\/json/)
 
     const blogsAtEnd = await helper.blogsInDb()
@@ -55,6 +104,26 @@ describe('posting a blog', () => {
 
 
 describe('data property validation', () => {
+  var headers
+  beforeEach(async () => {
+    const user = {
+      username: 'tester',
+      name: 'test',
+      password: 'testing'
+    }
+
+    await api
+      .post('/api/users')
+      .send(user)
+
+    const result = await api
+      .post('/api/login')
+      .send(user)
+
+    headers = {
+      'Authorization': `bearer ${result.body.token}`
+    }
+  })
   test('empty likes property defaults to zero', async () => {
     const newBlog = {
       title: 'Another test blog',
@@ -65,10 +134,15 @@ describe('data property validation', () => {
     await api
       .post('/api/blogs')
       .send(newBlog)
+      .set(headers)
       .expect(200)
       .expect('Content-Type', /application\/json/)
 
-    const response = await api.get('/api/blogs')
+    const response = await api
+      .get('/api/blogs')
+      .set(headers)
+
+    console.log(response)
 
     const newBlogResponse = response.body[2]
 
@@ -83,18 +157,41 @@ describe('data property validation', () => {
     await api
       .post('/api/blogs')
       .send(newBlog)
+      .set(headers)
       .expect(400)
   })
 })
 
 describe('deletion of a blog', () => {
-  test('succeeds with status code 204 is id is valid', async () => {
+  var headers
+  beforeEach(async () => {
+    const user = {
+      username: 'tester',
+      name: 'test',
+      password: 'testing'
+    }
+
+    await api
+      .post('/api/users')
+      .send(user)
+
+    const result = await api
+      .post('/api/login')
+      .send(user)
+
+    headers = {
+      'Authorization': `bearer ${result.body.token}`
+    }
+  })
+  test('succeeds with status code 204 if id is valid', async () => {
     const blogsAtStart = await helper.blogsInDb()
     const blogToDelete = blogsAtStart[0]
 
     await api
       .delete(`/api/blogs/${blogToDelete.id}`)
+      .set(headers)
       .expect(204)
+
 
     const blogsAtEnd = await helper.blogsInDb()
 
